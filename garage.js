@@ -1,6 +1,6 @@
 // garage.js
 const mqtt = require('mqtt')
-const client = mqtt.connect('mqtt://broker.hivemq.com')
+const client = mqtt.connect('mqtt://localhost')
 
 /**
  * The state of the garage, defaults to closed
@@ -11,6 +11,7 @@ var state = 'closed'
 client.on('connect', () => {
   client.subscribe('garage/open')
   client.subscribe('garage/close')
+  client.subscribe('garage/info')
 
   // Inform controllers that garage is connected
   client.publish('garage/connected', 'true')
@@ -24,6 +25,8 @@ client.on('message', (topic, message) => {
       return handleOpenRequest(message)
     case 'garage/close':
       return handleCloseRequest(message)
+    case 'garage/info':
+      return handleInfoRequest(message)
   }
 })
 
@@ -38,25 +41,31 @@ function handleOpenRequest (message) {
     state = 'opening'
     sendStateUpdate()
 
-    // simulate door open after 5 seconds (would be listening to hardware)
+    // simulate door open after 2 seconds (would be listening to hardware)
     setTimeout(() => {
       state = 'open'
       sendStateUpdate()
-    }, 5000)
+    }, 2000)
   }
 }
 
 function handleCloseRequest (message) {
+  console.log('received close', message);
   if (state !== 'closed' && state !== 'closing') {
     state = 'closing'
     sendStateUpdate()
 
-    // simulate door closed after 5 seconds (would be listening to hardware)
+    // simulate door closed after 2 seconds (would be listening to hardware)
     setTimeout(() => {
       state = 'closed'
       sendStateUpdate()
-    }, 5000)
+    }, 2000)
   }
+}
+
+function handleInfoRequest (message) {
+  console.log('received state request');
+  sendStateUpdate();
 }
 
 /**
